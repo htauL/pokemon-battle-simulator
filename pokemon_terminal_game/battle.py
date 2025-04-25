@@ -40,12 +40,12 @@ def delay_print(message, delay=0.75):
 
 # Start a battle between two teams of Pokemon
 def start_battle(player_team, opponent_team):
-    player_index = 0
-    opponent_index = 0
-
     delay_print(f"{BOLD}A battle begins!{RESET}")
     delay_print("Team 1: " + ", ".join([get_colored_name(p) for p in player_team]))
     print("Team 2: " + ", ".join([get_colored_name(p) for p in opponent_team]))
+
+    player_index = choose_pokemon(player_team)
+    opponent_index = 0
 
     while player_index < len(player_team) and opponent_index < len(opponent_team):
         player_pokemon = player_team[player_index]
@@ -101,10 +101,9 @@ def start_battle(player_team, opponent_team):
 
                 if player_pokemon.fainted:
                     delay_print(f"{get_colored_name(player_pokemon)} fainted!")
-                    player_index += 1
-                    while player_index < len(player_team) and player_team[player_index].fainted:
-                        player_index += 1
-                    if player_index >= len(player_team):
+                    if (check_for_unfainted_pokemon(player_team)):
+                        player_index = choose_pokemon(player_team)
+                    else:
                         delay_print(f"\n{BOLD}{RED}💀 All your Pokemon fainted. You lost the battle!{RESET}")
                         return
                     break
@@ -151,3 +150,43 @@ def get_type_effectiveness(move_type, defender_types):
         elif move_type in chart.get("resistances", []):
             multiplier *= 0.5
     return multiplier
+
+def choose_pokemon(team):
+    while True:
+        delay_print(f"\n{BOLD}Choose a pokemon:{RESET}")
+        for index, pokemon in enumerate(team):
+            fainted_text = ""
+            if (pokemon.fainted):
+                fainted_text = "(fainted)"
+            print(f"{index + 1}. {get_colored_name(pokemon)}{RESET}{fainted_text}")
+        
+        try:
+            selected_index = int(input("Enter pokemon number: ")) - 1
+
+            # Out of bounds check
+            if selected_index < 0 or selected_index >= len(team):
+                raise IndexError
+            
+            # Check if the Pokemon is fainted
+            if team[selected_index].fainted:
+                raise FaintedPokemonSelected("You can't choose a fainted Pokemon!")
+
+            delay_print(f"\n{BOLD}Go, {get_colored_name(team[selected_index])}!")
+
+            return selected_index
+        
+        except ValueError:
+            delay_print(f"{RED}Invalid input! Please enter a valid pokemon number.{RESET}")
+        except IndexError:
+            delay_print(f"{RED}Invalid pokemon selection! Please choose a valid pokemon number.{RESET}")
+        except FaintedPokemonSelected as e:
+            delay_print(f"{RED}{e}{RESET}")
+
+def check_for_unfainted_pokemon(team):
+    return any(not pokemon.fainted for pokemon in team)
+
+class FaintedPokemonSelected(Exception):
+    pass
+
+
+    

@@ -113,3 +113,4 @@ type_chart = {
         "immunities": [Type.DRAGON]
     }
 }
+
